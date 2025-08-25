@@ -240,15 +240,21 @@ export const useEmailCotizacion = (empresaConfig) => {
     setIsLoading(true);
     
     try {
-      // Verificar que el cliente tenga email
-      if (!cliente || !cliente.email) {
-        alert('Error: El cliente no tiene email registrado');
-        setIsLoading(false);
-        return;
+      // Determinar email destino
+      let emailDestino = '';
+      let mensajeConfirmacion = '';
+      
+      if (cliente && cliente.email) {
+        // Cliente tiene email registrado
+        emailDestino = cliente.email;
+        mensajeConfirmacion = `¿Enviar cotización ${cotizacion.numero} a: ${cliente.email}?`;
+      } else {
+        // Cliente sin email - abrir Gmail para que el vendedor ingrese el destino
+        mensajeConfirmacion = `El cliente no tiene email registrado.\n¿Abrir Gmail para enviar cotización ${cotizacion.numero} manualmente?`;
       }
 
       // Mostrar confirmación
-      const confirmar = window.confirm(`¿Enviar cotización ${cotizacion.numero} a: ${cliente.email}?`);
+      const confirmar = window.confirm(mensajeConfirmacion);
       if (!confirmar) {
         setIsLoading(false);
         return;
@@ -269,13 +275,14 @@ export const useEmailCotizacion = (empresaConfig) => {
 
       // Preparar datos para el email
       const asunto = `Cotización ${cotizacion.numero} - ${empresaConfig.nombre}`;
-      const cuerpo = `Estimado/a ${cliente.nombre},
+      const clienteNombre = cliente ? cliente.nombre : 'Cliente';
+      const cuerpo = `Estimado/a ${clienteNombre},
 
 Adjunto encontrará la cotización ${cotizacion.numero} solicitada.
 
 Detalles de la cotización:
 - Fecha: ${new Date(cotizacion.fecha).toLocaleDateString('es-ES')}
-- Total: $${cotizacion.total.toLocaleString('es-CO')}
+- Total: ${cotizacion.total.toLocaleString('es-CO')}
 - Validez: ${cotizacion.validez} días
 
 Para cualquier consulta, no dude en contactarnos.
@@ -287,7 +294,7 @@ Teléfono: 3208425008
 Email: ventas@plastivalle.com`;
 
       // Abrir Gmail Web directamente
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(cliente.email)}&su=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailDestino)}&su=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
       
       // Abrir Gmail en nueva pestaña
       const gmailWindow = window.open(gmailUrl, '_blank', 'width=1024,height=768');
@@ -330,7 +337,11 @@ Email: ventas@plastivalle.com`;
       
       // Mostrar mensaje de éxito
       setTimeout(() => {
-        alert(`✅ PDF descargado exitosamente!\n🌐 Gmail abierto con el correo preparado para: ${cliente.email}\n\n📎 No olvides adjuntar el PDF descargado antes de enviar.`);
+        if (emailDestino) {
+          alert(`✅ PDF descargado exitosamente!\n🌐 Gmail abierto con el correo preparado para: ${emailDestino}\n\n📎 No olvides adjuntar el PDF descargado antes de enviar.`);
+        } else {
+          alert(`✅ PDF descargado exitosamente!\n🌐 Gmail abierto para enviar cotización\n\n📝 Ingresa el email del cliente en el campo "Para"\n📎 No olvides adjuntar el PDF descargado antes de enviar.`);
+        }
       }, 1000);
 
     } catch (error) {

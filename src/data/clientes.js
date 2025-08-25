@@ -12,7 +12,7 @@ export const clientesIniciales = [
     cupo: "5.000.000,00",
     condicionPago: "CREDITO",
     empresa: "ORIX PACK S.A.S",
-    email: "carlos.montero@syncbi.net"
+    email: ""
   },
   {
     id: 2,
