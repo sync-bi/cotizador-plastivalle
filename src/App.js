@@ -53,7 +53,7 @@ const handleEnviarCorreo = async (cotizacion) => {
     // ===== NUEVA LÓGICA PARA PRODUCTOS AGRUPADOS =====
     // Función para obtener productos únicos (agrupados por idProducto)
     
-    setClientes(clientesIniciales);
+    //setClientes(clientesIniciales);
     setProductos(productosIniciales); // Mantenemos todos los desgloses individuales
     
     // Guardamos también los productos agrupados en window para uso en formularios
