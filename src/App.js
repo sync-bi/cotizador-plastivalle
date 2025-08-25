@@ -24,7 +24,8 @@ const CotizadorApp = () => {
     telefono: 'PBX: (0571) 745-05-45- 572 45 45 – 3 35 00 88',
     email: 'ventas2@plastivalle.com',
     web: 'www.plastivalle.com',
-    ciudad: 'Bogotá D.C.- Colombia'
+    ciudad: 'Bogotá D.C.- Colombia',
+    emailEnvio: 'ventas2@plastivalle.com' // Correo desde el cual enviar
   };
 
   const { enviarCotizacion, isLoading } = useEmailCotizacion(empresaConfig);
@@ -53,7 +54,7 @@ const handleEnviarCorreo = async (cotizacion) => {
     // ===== NUEVA LÓGICA PARA PRODUCTOS AGRUPADOS =====
     // Función para obtener productos únicos (agrupados por idProducto)
     
-    //setClientes(clientesIniciales);
+    setClientes(clientesIniciales);
     setProductos(productosIniciales); // Mantenemos todos los desgloses individuales
     
     // Guardamos también los productos agrupados en window para uso en formularios
