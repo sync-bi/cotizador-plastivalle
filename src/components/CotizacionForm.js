@@ -26,6 +26,9 @@ const CotizacionForm = ({
   const [cantidad, setCantidad] = useState(1);
   const [procesoFiltro, setProcesoFiltro] = useState('');
   
+  // Busqueda de clientes
+  const [busquedaCliente, setBusquedaCliente] = useState('');
+  
   // Estados para opciones personalizables
   const [opcionesSoplado, setOpcionesSoplado] = useState({
     color: 'blanco',  // Siempre empieza en blanco
@@ -227,19 +230,55 @@ const CotizacionForm = ({
         </div>
         <div className="col-md-6">
           <label className="form-label">Cliente</label>
-          <select
-            className="form-select"
-            value={formData.clienteId}
-            onChange={(e) => setFormData({...formData, clienteId: e.target.value})}
-            required
-          >
-            <option value="">Seleccionar Cliente</option>
-            {clientes.map(cliente => (
-              <option key={cliente.id} value={cliente.id}>
-                {cliente.nombre}
-              </option>
-            ))}
-          </select>
+          {/* Buscador de clientes */}
+          <input
+            type="text"
+            className="form-control mb-2"
+            placeholder="Buscar cliente por nombre, NIT o codigo..."
+            value={busquedaCliente}
+            onChange={(e) => setBusquedaCliente(e.target.value)}
+          />
+          {(() => {
+            const term = busquedaCliente.trim().toLowerCase();
+            const filtrados = !term
+              ? clientes
+              : clientes.filter(c => {
+                  const campos = [c.nombre, c.empresa, c.nit, c.codigo].filter(Boolean);
+                  return campos.some(v => String(v).toLowerCase().includes(term));
+                });
+
+            const MAX = 200;
+            const seleccionado = clientes.find(c => String(c.id) === String(formData.clienteId));
+            let lista = filtrados;
+            if (lista.length > MAX) {
+              lista = lista.slice(0, MAX);
+            }
+            if (seleccionado && !lista.some(c => c.id === seleccionado.id)) {
+              lista = [seleccionado, ...lista];
+            }
+
+            return (
+              <>
+                <select
+                  className="form-select"
+                  value={formData.clienteId}
+                  onChange={(e) => setFormData({...formData, clienteId: e.target.value})}
+                  required
+                >
+                  <option value="">Seleccionar Cliente</option>
+                  {lista.map(cliente => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {cliente.nombre} {cliente.nit ? `- ${cliente.nit}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <small className="text-muted d-block mt-1">
+                  {filtrados.length} resultado{filtrados.length === 1 ? '' : 's'}
+                  {filtrados.length > MAX ? ` (mostrando los primeros ${MAX})` : ''}
+                </small>
+              </>
+            );
+          })()}
         </div>
         <div className="col-md-4">
           <label className="form-label">Fecha</label>
