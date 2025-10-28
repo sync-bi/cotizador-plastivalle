@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, FileText, Users, Package, Calculator, Search, Download } from 'lucide-react';
 import CotizacionForm from './components/CotizacionForm';
-import { productosIniciales, obtenerProductosUnicos, obtenerImagenProducto } from './data/productos';
-import { clientesIniciales } from './data/clientes';
+import { obtenerProductosUnicos, obtenerImagenProducto } from './data/productos';
 import { Mail } from 'lucide-react';
 import { useEmailCotizacion } from './hooks/useEmailCotizacion';
+import { clientesAPI, productosAPI, cotizacionesAPI } from './services/firebase';
 
 const CotizadorApp = () => {
   const [activeTab, setActiveTab] = useState('cotizaciones');
@@ -15,6 +15,8 @@ const CotizadorApp = () => {
   const [modalType, setModalType] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
 
   // Configuración de la empresa
@@ -31,12 +33,21 @@ const CotizadorApp = () => {
   const { enviarCotizacion, isLoading } = useEmailCotizacion(empresaConfig);
 
   // Función para cambiar estado de cotización
-const cambiarEstadoCotizacion = (cotizacionId, nuevoEstado) => {
-  setCotizaciones(cotizaciones.map(c => 
-    c.id === cotizacionId 
-      ? { ...c, estado: nuevoEstado }
-      : c
-  ));
+const cambiarEstadoCotizacion = async (cotizacionId, nuevoEstado) => {
+  try {
+    const cotizacion = cotizaciones.find(c => c.id === cotizacionId);
+    if (cotizacion) {
+      await cotizacionesAPI.update(cotizacionId, { ...cotizacion, estado: nuevoEstado });
+      setCotizaciones(cotizaciones.map(c =>
+        c.id === cotizacionId
+          ? { ...c, estado: nuevoEstado }
+          : c
+      ));
+    }
+  } catch (error) {
+    console.error('Error al cambiar estado:', error);
+    alert('Error al cambiar estado de cotización: ' + error.message);
+  }
 };
 
 // Función para enviar por correo
@@ -45,20 +56,36 @@ const handleEnviarCorreo = async (cotizacion) => {
   await enviarCotizacion(cotizacion, cliente, cambiarEstadoCotizacion);
 };
 
-  // Datos iniciales de ejemplo
+  // Cargar datos desde la API
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    
-    // PRODUCTOS - Ahora cada registro es un desglose individual
-    
-    // ===== NUEVA LÓGICA PARA PRODUCTOS AGRUPADOS =====
-    // Función para obtener productos únicos (agrupados por idProducto)
-    
-    setClientes(clientesIniciales);
-    setProductos(productosIniciales); // Mantenemos todos los desgloses individuales
-    
-    // Guardamos también los productos agrupados en window para uso en formularios
-    window.productosAgrupados = obtenerProductosUnicos(productosIniciales);
+        // Cargar datos desde JSON Server
+        const [clientesData, productosData, cotizacionesData] = await Promise.all([
+          clientesAPI.getAll(),
+          productosAPI.getAll(),
+          cotizacionesAPI.getAll()
+        ]);
+
+        setClientes(clientesData);
+        setProductos(productosData);
+        setCotizaciones(cotizacionesData);
+
+        // Guardamos también los productos agrupados en window para uso en formularios
+        window.productosAgrupados = obtenerProductosUnicos(productosData);
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+        setError('Error al cargar datos. Asegúrate de que JSON Server esté corriendo en el puerto 3001.');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   // Función para generar PDF
@@ -299,16 +326,30 @@ const handleEnviarCorreo = async (cotizacion) => {
     const [formData, setFormData] = useState(
       editingItem || { nombre: '', email: '', telefono: '', empresa: '' }
     );
+    const [saving, setSaving] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
-      if (editingItem) {
-        setClientes(clientes.map(c => c.id === editingItem.id ? { ...formData, id: editingItem.id } : c));
-      } else {
-        setClientes([...clientes, { ...formData, id: Date.now() }]);
+      setSaving(true);
+
+      try {
+        if (editingItem) {
+          // Actualizar cliente existente
+          await clientesAPI.update(editingItem.id, { ...formData, id: editingItem.id });
+          setClientes(clientes.map(c => c.id === editingItem.id ? { ...formData, id: editingItem.id } : c));
+        } else {
+          // Crear nuevo cliente
+          const nuevoCliente = await clientesAPI.create(formData);
+          setClientes([...clientes, nuevoCliente]);
+        }
+        setShowModal(false);
+        setEditingItem(null);
+      } catch (error) {
+        alert('Error al guardar cliente: ' + error.message);
+        console.error('Error:', error);
+      } finally {
+        setSaving(false);
       }
-      setShowModal(false);
-      setEditingItem(null);
     };
 
     return (
@@ -356,10 +397,10 @@ const handleEnviarCorreo = async (cotizacion) => {
           </div>
         </div>
         <div className="mt-4">
-          <button type="submit" className="btn btn-primary me-2">
-            {editingItem ? 'Actualizar' : 'Crear'} Cliente
+          <button type="submit" className="btn btn-primary me-2" disabled={saving}>
+            {saving ? 'Guardando...' : (editingItem ? 'Actualizar' : 'Crear') + ' Cliente'}
           </button>
-          <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+          <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={saving}>
             Cancelar
           </button>
         </div>
@@ -370,31 +411,46 @@ const handleEnviarCorreo = async (cotizacion) => {
   // Formulario de Producto
   const ProductoForm = () => {
     const [formData, setFormData] = useState(
-      editingItem || { 
-        nombre: '', 
-        precio: '', 
-        descripcion: '', 
-        categoria: '', 
+      editingItem || {
+        nombre: '',
+        precio: '',
+        descripcion: '',
+        categoria: '',
         proceso: '',
         material: '',
         peso: ''
       }
     );
+    const [saving, setSaving] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
-      const productoData = { 
-        ...formData, 
-        precio: parseFloat(formData.precio),
-        peso: parseFloat(formData.peso) || 0
-      };
-      if (editingItem) {
-        setProductos(productos.map(p => p.id === editingItem.id ? { ...productoData, id: editingItem.id } : p));
-      } else {
-        setProductos([...productos, { ...productoData, id: Date.now() }]);
+      setSaving(true);
+      try {
+        const productoData = {
+          ...formData,
+          precio: parseFloat(formData.precio),
+          peso: parseFloat(formData.peso) || 0
+        };
+        if (editingItem) {
+          await productosAPI.update(editingItem.id, { ...productoData, id: editingItem.id });
+          const productosActualizados = productos.map(p => p.id === editingItem.id ? { ...productoData, id: editingItem.id } : p);
+          setProductos(productosActualizados);
+          window.productosAgrupados = obtenerProductosUnicos(productosActualizados);
+        } else {
+          const nuevoProducto = await productosAPI.create(productoData);
+          const productosActualizados = [...productos, nuevoProducto];
+          setProductos(productosActualizados);
+          window.productosAgrupados = obtenerProductosUnicos(productosActualizados);
+        }
+        setShowModal(false);
+        setEditingItem(null);
+      } catch (error) {
+        alert('Error al guardar producto: ' + error.message);
+        console.error('Error:', error);
+      } finally {
+        setSaving(false);
       }
-      setShowModal(false);
-      setEditingItem(null);
     };
 
     return (
@@ -474,10 +530,10 @@ const handleEnviarCorreo = async (cotizacion) => {
           </div>
         </div>
         <div className="mt-4">
-          <button type="submit" className="btn btn-success me-2">
-            {editingItem ? 'Actualizar' : 'Crear'} Producto
+          <button type="submit" className="btn btn-success me-2" disabled={saving}>
+            {saving ? 'Guardando...' : (editingItem ? 'Actualizar' : 'Crear') + ' Producto'}
           </button>
-          <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+          <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={saving}>
             Cancelar
           </button>
         </div>
@@ -488,14 +544,24 @@ const handleEnviarCorreo = async (cotizacion) => {
   
 
   // Funciones de utilidad
-  const eliminarElemento = (tipo, id) => {
+  const eliminarElemento = async (tipo, id) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este elemento?')) {
-      if (tipo === 'cliente') {
-        setClientes(clientes.filter(c => c.id !== id));
-      } else if (tipo === 'producto') {
-        setProductos(productos.filter(p => p.id !== id));
-      } else if (tipo === 'cotizacion') {
-        setCotizaciones(cotizaciones.filter(c => c.id !== id));
+      try {
+        if (tipo === 'cliente') {
+          await clientesAPI.delete(id);
+          setClientes(clientes.filter(c => c.id !== id));
+        } else if (tipo === 'producto') {
+          await productosAPI.delete(id);
+          setProductos(productos.filter(p => p.id !== id));
+          // Actualizar productos agrupados
+          window.productosAgrupados = obtenerProductosUnicos(productos.filter(p => p.id !== id));
+        } else if (tipo === 'cotizacion') {
+          await cotizacionesAPI.delete(id);
+          setCotizaciones(cotizaciones.filter(c => c.id !== id));
+        }
+      } catch (error) {
+        alert('Error al eliminar: ' + error.message);
+        console.error('Error al eliminar:', error);
       }
     }
   };
@@ -869,17 +935,24 @@ const handleEnviarCorreo = async (cotizacion) => {
           {modalType === 'cliente' && <ClienteForm />}
           {modalType === 'producto' && <ProductoForm />}
           {modalType === 'cotizacion' && (
-            <CotizacionForm 
+            <CotizacionForm
               editingItem={editingItem}
               clientes={clientes}
-              onSubmit={(cotizacionData) => {
-                if (editingItem) {
-                  setCotizaciones(cotizaciones.map(c => c.id === editingItem.id ? { ...cotizacionData, id: editingItem.id } : c));
-                } else {
-                  setCotizaciones([...cotizaciones, { ...cotizacionData, id: Date.now() }]);
+              onSubmit={async (cotizacionData) => {
+                try {
+                  if (editingItem) {
+                    await cotizacionesAPI.update(editingItem.id, { ...cotizacionData, id: editingItem.id });
+                    setCotizaciones(cotizaciones.map(c => c.id === editingItem.id ? { ...cotizacionData, id: editingItem.id } : c));
+                  } else {
+                    const nuevaCotizacion = await cotizacionesAPI.create(cotizacionData);
+                    setCotizaciones([...cotizaciones, nuevaCotizacion]);
+                  }
+                  setShowModal(false);
+                  setEditingItem(null);
+                } catch (error) {
+                  alert('Error al guardar cotización: ' + error.message);
+                  console.error('Error:', error);
                 }
-                setShowModal(false);
-                setEditingItem(null);
               }}
               onCancel={() => setShowModal(false)}
             />
