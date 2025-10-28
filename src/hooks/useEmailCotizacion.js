@@ -76,12 +76,15 @@ export const useEmailCotizacion = (empresaConfig) => {
       </head>
       <body>
         <div class="header">
-          <div>
-            <h1 class="company-name">${empresaConfig.nombre}</h1>
-            <div class="company-info">${empresaConfig.telefono}</div>
-            <div class="company-info">${empresaConfig.direccion}</div>
-            <div class="company-info">e-mail: ${empresaConfig.email} ${empresaConfig.web}</div>
-            <div class="company-info">${empresaConfig.ciudad}</div>
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <img src="/images/logo-plastivalle.jpg" alt="Logo Plastivalle" style="height: 60px; border-radius: 4px;" onerror="this.style.display='none'">
+            <div>
+              <h1 class="company-name">${empresaConfig.nombre}</h1>
+              <div class="company-info">${empresaConfig.telefono}</div>
+              <div class="company-info">${empresaConfig.direccion}</div>
+              <div class="company-info">e-mail: ${empresaConfig.email} ${empresaConfig.web}</div>
+              <div class="company-info">${empresaConfig.ciudad}</div>
+            </div>
           </div>
         </div>
 
@@ -183,10 +186,17 @@ export const useEmailCotizacion = (empresaConfig) => {
           <h4 style="color: #FF6B35;">CONDICIONES COMERCIALES:</h4>
           <ul>
             <li>El pedido se formalizará mediante una orden de compra</li>
-            <li>Forma de pago: Contado, anticipo del 50% con la orden de compra y el restante antes de su entrega</li>
-            <li>Para productos sin impresión su entrega es dentro de 10 días hábiles y con impresión son 15 días hábiles</li>
-            <li>Validez de la cotización: ${cotizacion.validez} días</li>
+            <li><strong>Forma de pago:</strong> ${cotizacion.formaPago || 'Contado, anticipo del 50% con la orden de compra y el restante antes de su entrega'}</li>
+            ${cotizacion.tiempoDespacho ? `<li><strong>Tiempo de despacho:</strong> ${cotizacion.tiempoDespacho} ${cotizacion.unidadTiempoDespacho || 'días'}</li>` : '<li>Para productos sin impresión su entrega es dentro de 10 días hábiles y con impresión son 15 días hábiles</li>'}
+            ${cotizacion.transporte ? `<li><strong>Transporte:</strong> ${cotizacion.transporte}</li>` : ''}
+            <li><strong>Validez de la cotización:</strong> ${cotizacion.validez} días</li>
           </ul>
+          ${cotizacion.observacionesNegociacion ? `
+            <div style="margin-top: 15px; padding: 10px; background-color: #fff3cd; border-left: 4px solid #FF6B35;">
+              <strong>Observaciones:</strong><br>
+              ${cotizacion.observacionesNegociacion}
+            </div>
+          ` : ''}
         </div>
 
         <div style="margin-top: 40px;">
@@ -263,11 +273,15 @@ export const useEmailCotizacion = (empresaConfig) => {
       // Generar PDF
       const pdfBlob = await generarPDFParaEmail(cotizacion, cliente);
       
-      // Crear archivo temporal para descarga
+      // Crear archivo temporal para descarga con nombre descriptivo
+      const clienteNombreArchivo = cliente ? cliente.nombre.replace(/[^a-zA-Z0-9]/g, '_') : 'Cliente';
+      const fecha = new Date(cotizacion.fecha).toISOString().split('T')[0];
+      const nombreArchivo = `${clienteNombreArchivo}_${fecha}_${cotizacion.numero}.pdf`;
+
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Cotizacion_${cotizacion.numero}.pdf`;
+      link.download = nombreArchivo;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

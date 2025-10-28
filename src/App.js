@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, FileText, Users, Package, Calculator, Search, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Users, Package, Calculator, Search, Download } from 'lucide-react';
 import CotizacionForm from './components/CotizacionForm';
-import { productosIniciales, obtenerProductosUnicos } from './data/productos';
+import { productosIniciales, obtenerProductosUnicos, obtenerImagenProducto } from './data/productos';
 import { clientesIniciales } from './data/clientes';
 import { Mail } from 'lucide-react';
 import { useEmailCotizacion } from './hooks/useEmailCotizacion';
@@ -133,12 +133,15 @@ const handleEnviarCorreo = async (cotizacion) => {
       </head>
       <body>
         <div class="header">
-          <div>
-            <h1 class="company-name">${empresaConfig.nombre}</h1>
-            <div class="company-info">${empresaConfig.telefono}</div>
-            <div class="company-info">${empresaConfig.direccion}</div>
-            <div class="company-info">e-mail: ${empresaConfig.email} ${empresaConfig.web}</div>
-            <div class="company-info">${empresaConfig.ciudad}</div>
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <img src="/images/logo-plastivalle.jpg" alt="Logo Plastivalle" style="height: 60px; border-radius: 4px;" onerror="this.style.display='none'">
+            <div>
+              <h1 class="company-name">${empresaConfig.nombre}</h1>
+              <div class="company-info">${empresaConfig.telefono}</div>
+              <div class="company-info">${empresaConfig.direccion}</div>
+              <div class="company-info">e-mail: ${empresaConfig.email} ${empresaConfig.web}</div>
+              <div class="company-info">${empresaConfig.ciudad}</div>
+            </div>
           </div>
         </div>
 
@@ -240,10 +243,17 @@ const handleEnviarCorreo = async (cotizacion) => {
           <h4 style="color: #FF6B35;">CONDICIONES COMERCIALES:</h4>
           <ul>
             <li>El pedido se formalizará mediante una orden de compra</li>
-            <li>Forma de pago: Contado, anticipo del 50% con la orden de compra y el restante antes de su entrega</li>
-            <li>Para productos sin impresión su entrega es dentro de 10 días hábiles y con impresión son 15 días hábiles</li>
-            <li>Validez de la cotización: ${cotizacion.validez} días</li>
+            <li><strong>Forma de pago:</strong> ${cotizacion.formaPago || 'Contado, anticipo del 50% con la orden de compra y el restante antes de su entrega'}</li>
+            ${cotizacion.tiempoDespacho ? `<li><strong>Tiempo de despacho:</strong> ${cotizacion.tiempoDespacho} ${cotizacion.unidadTiempoDespacho || 'días'}</li>` : '<li>Para productos sin impresión su entrega es dentro de 10 días hábiles y con impresión son 15 días hábiles</li>'}
+            ${cotizacion.transporte ? `<li><strong>Transporte:</strong> ${cotizacion.transporte}</li>` : ''}
+            <li><strong>Validez de la cotización:</strong> ${cotizacion.validez} días</li>
           </ul>
+          ${cotizacion.observacionesNegociacion ? `
+            <div style="margin-top: 15px; padding: 10px; background-color: #fff3cd; border-left: 4px solid #FF6B35;">
+              <strong>Observaciones:</strong><br>
+              ${cotizacion.observacionesNegociacion}
+            </div>
+          ` : ''}
         </div>
 
         <div style="margin-top: 40px;">
@@ -432,6 +442,7 @@ const handleEnviarCorreo = async (cotizacion) => {
               <option value="">Seleccionar Proceso</option>
               <option value="Soplado">Soplado</option>
               <option value="Inyectado">Inyectado</option>
+              <option value="Otros">Otros</option>
             </select>
           </div>
           <div className="col-md-4">
@@ -520,8 +531,17 @@ const handleEnviarCorreo = async (cotizacion) => {
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
         <div className="container-fluid">
           <div className="d-flex align-items-center">
-            <Calculator className="me-2" size={32} />
-            <span className="navbar-brand mb-0 h1">Sistema de Cotizaciones</span>
+            <img
+              src="/images/logo-plastivalle.jpg"
+              alt="Plastivalle Logo"
+              style={{height: '40px', marginRight: '15px', borderRadius: '4px'}}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'inline';
+              }}
+            />
+            <Calculator className="me-2" size={32} style={{display: 'none'}} />
+            <span className="navbar-brand mb-0 h1">PLASTIVALLE - Sistema de Cotizaciones</span>
           </div>
           <div className="d-flex align-items-center">
             <div className="position-relative">
@@ -764,6 +784,7 @@ const handleEnviarCorreo = async (cotizacion) => {
                   <table className="table table-hover mb-0">
                     <thead className="table-dark">
                       <tr>
+                        <th style={{width: '60px'}}>Imagen</th>
                         <th>Nombre</th>
                         <th>Categoría</th>
                         <th>Proceso</th>
@@ -776,6 +797,17 @@ const handleEnviarCorreo = async (cotizacion) => {
                     <tbody>
                       {filtrarElementos(productos, searchTerm).map(producto => (
                         <tr key={producto.id}>
+                          <td>
+                            <img
+                              src={obtenerImagenProducto(producto)}
+                              alt={producto.nombre}
+                              style={{width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px'}}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/images/productos/placeholder.svg';
+                              }}
+                            />
+                          </td>
                           <td className="fw-bold">{producto.nombre}</td>
                           <td>
                             <span className={`badge ${producto.categoria === 'INYECTADOS' ? 'bg-warning' : 'bg-info'}`}>

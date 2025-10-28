@@ -17,7 +17,12 @@ const CotizacionForm = ({
       estado: 'borrador',
       items: [],
       descuento: 0,
-      impuesto: 19
+      impuesto: 19,
+      tiempoDespacho: '',
+      unidadTiempoDespacho: 'días',
+      formaPago: 'Contado, anticipo del 50% con la orden de compra y el restante antes de su entrega',
+      transporte: '',
+      observacionesNegociacion: ''
     }
   );
 
@@ -32,7 +37,6 @@ const CotizacionForm = ({
   // Estados para opciones personalizables
   const [opcionesSoplado, setOpcionesSoplado] = useState({
     color: 'blanco',  // Siempre empieza en blanco
-    tapa: '',
     material: ''
   });
 
@@ -41,8 +45,9 @@ const CotizacionForm = ({
     material: ''
   });
 
-  // Estado para pesos personalizados de desgloses
+  // Estado para pesos personalizados de desgloses (valor y unidad)
   const [pesosPersonalizados, setPesosPersonalizados] = useState({});
+  const [unidadesPeso, setUnidadesPeso] = useState({});
 
   // Obtener productos únicos filtrados por proceso
   const getProductosUnicos = () => {
@@ -56,22 +61,56 @@ const CotizacionForm = ({
   // Obtener desgloses del producto seleccionado con cálculos dinámicos
   const getDesglosesProducto = () => {
     if (!selectedProducto || !window.productosAgrupados) return [];
-    
+
     const producto = window.productosAgrupados.find(p => p.id === parseInt(selectedProducto));
     if (!producto) return [];
-    
+
+    // Convertir pesos personalizados a gramos antes de calcular
+    const pesosEnGramos = {};
+    Object.keys(pesosPersonalizados).forEach(desgloseId => {
+      const valor = pesosPersonalizados[desgloseId];
+      // Si está vacío o es 0, no incluir en el recalculo
+      if (valor !== '' && valor !== 0) {
+        const unidad = unidadesPeso[desgloseId] || 'g';
+        pesosEnGramos[desgloseId] = convertirAGramos(valor, unidad);
+      }
+    });
+
     // Aplicar cálculos dinámicos si hay pesos personalizados
-    const desglosesRecalculados = recalcularDesglosesConPesos(producto.desgloses, pesosPersonalizados);
-    
+    const desglosesRecalculados = recalcularDesglosesConPesos(producto.desgloses, pesosEnGramos);
+
     return desglosesRecalculados;
   };
 
   // Manejar cambio de peso personalizado
   const handlePesoChange = (desgloseId, nuevoPeso) => {
+    // Permitir string vacío para poder borrar
+    const valor = nuevoPeso === '' ? '' : parseFloat(nuevoPeso);
     setPesosPersonalizados(prev => ({
       ...prev,
-      [desgloseId]: parseFloat(nuevoPeso) || 0
+      [desgloseId]: valor
     }));
+  };
+
+  // Manejar cambio de unidad de peso
+  const handleUnidadPesoChange = (desgloseId, nuevaUnidad) => {
+    setUnidadesPeso(prev => ({
+      ...prev,
+      [desgloseId]: nuevaUnidad
+    }));
+  };
+
+  // Convertir peso a gramos según la unidad
+  const convertirAGramos = (valor, unidad) => {
+    switch(unidad) {
+      case 'kg':
+        return valor * 1000;
+      case 'lb':
+        return valor * 453.592;
+      case 'g':
+      default:
+        return valor;
+    }
   };
 
   // Manejar selección de desgloses
@@ -99,7 +138,6 @@ const CotizacionForm = ({
           if (producto.proceso === 'Soplado') {
             setOpcionesSoplado({
               color: 'blanco',  // Siempre blanco por defecto
-              tapa: '',
               material: primerDesglose.material || ''
             });
           } else if (producto.proceso === 'Inyectado') {
@@ -114,7 +152,6 @@ const CotizacionForm = ({
       // Resetear opciones manteniendo color en blanco
       setOpcionesSoplado({
         color: 'blanco',
-        tapa: '',
         material: ''
       });
       setOpcionesInyeccion({
@@ -139,7 +176,6 @@ const CotizacionForm = ({
     if (procesoFiltro === 'Soplado') {
       const opciones = [];
       if (opcionesSoplado.color && opcionesSoplado.color !== 'blanco') opciones.push(`Color: ${opcionesSoplado.color}`);
-      if (opcionesSoplado.tapa) opciones.push(`Tapa: ${opcionesSoplado.tapa}`);
       if (opcionesSoplado.material) opciones.push(`Material: ${opcionesSoplado.material}`);
       if (opciones.length > 0) {
         descripcionPersonalizada += '\nPersonalizado: ' + opciones.join(', ');
@@ -186,6 +222,7 @@ const CotizacionForm = ({
     setCantidad(1);
     setProcesoFiltro('');
     setPesosPersonalizados({}); // Limpiar pesos personalizados
+    setUnidadesPeso({}); // Limpiar unidades de peso
     const obsField = document.getElementById('observaciones-temp');
     if (obsField) obsField.value = '';
   };
@@ -313,6 +350,58 @@ const CotizacionForm = ({
             <option value="rechazada">Rechazada</option>
           </select>
         </div>
+        <div className="col-md-3">
+          <label className="form-label">Tiempo de Despacho</label>
+          <div className="input-group">
+            <input
+              type="number"
+              className="form-control"
+              value={formData.tiempoDespacho}
+              onChange={(e) => setFormData({...formData, tiempoDespacho: e.target.value})}
+              placeholder="Ej: 15"
+            />
+            <select
+              className="form-select"
+              style={{maxWidth: '100px'}}
+              value={formData.unidadTiempoDespacho}
+              onChange={(e) => setFormData({...formData, unidadTiempoDespacho: e.target.value})}
+            >
+              <option value="días">días</option>
+              <option value="horas">horas</option>
+              <option value="semanas">semanas</option>
+            </select>
+          </div>
+        </div>
+        <div className="col-md-9">
+          <label className="form-label">Forma de Pago</label>
+          <input
+            type="text"
+            className="form-control"
+            value={formData.formaPago}
+            onChange={(e) => setFormData({...formData, formaPago: e.target.value})}
+            placeholder="Ej: Contado, anticipo del 50%..."
+          />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Transporte</label>
+          <input
+            type="text"
+            className="form-control"
+            value={formData.transporte}
+            onChange={(e) => setFormData({...formData, transporte: e.target.value})}
+            placeholder="Ej: Por cuenta del cliente, incluido, etc."
+          />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Observaciones de Negociación</label>
+          <textarea
+            className="form-control"
+            rows="1"
+            value={formData.observacionesNegociacion}
+            onChange={(e) => setFormData({...formData, observacionesNegociacion: e.target.value})}
+            placeholder="Datos específicos de esta negociación..."
+          />
+        </div>
       </div>
 
       {/* Agregar productos */}
@@ -337,6 +426,7 @@ const CotizacionForm = ({
                 <option value="">Todos los procesos</option>
                 <option value="Inyectado">Inyectado</option>
                 <option value="Soplado">Soplado</option>
+                <option value="Otros">Otros</option>
               </select>
             </div>
           </div>
@@ -414,18 +504,6 @@ const CotizacionForm = ({
                         <option value="rosado">Rosado</option>
                       </select>
                     </div>
-                    {procesoFiltro === 'Soplado' && (
-                      <div className="col-md-3">
-                        <label className="form-label">Tapa (opcional)</label>
-                        <input
-                          type="text"
-                          className="form-control form-control-sm"
-                          placeholder="Tipo de tapa"
-                          value={opcionesSoplado.tapa}
-                          onChange={(e) => setOpcionesSoplado({...opcionesSoplado, tapa: e.target.value})}
-                        />
-                      </div>
-                    )}
                     <div className="col-md-3">
                       <label className="form-label">Material Personalizado (opcional)</label>
                       <input
@@ -461,11 +539,17 @@ const CotizacionForm = ({
                     </thead>
                     <tbody>
                       {getDesglosesProducto().map(desglose => {
-                        const pesoPersonalizado = pesosPersonalizados[desglose.id] || desglose.peso;
+                        const pesoPersonalizado = pesosPersonalizados[desglose.id] !== undefined && pesosPersonalizados[desglose.id] !== '' ? pesosPersonalizados[desglose.id] : desglose.peso;
                         const precioMostrar = desglose.recalculado ? desglose.precio : desglose.precio;
                         const producto = window.productosAgrupados.find(p => p.id === parseInt(selectedProducto));
                         const esSoplado = producto && producto.proceso === 'Soplado';
-                        
+
+                        // Detectar si es tapa/tapon (no editable)
+                        // Solo es NO editable si el nombre COMIENZA con "TAPA" o "TAPON"
+                        const nombreLower = desglose.nombre.toLowerCase();
+                        const esTapa = nombreLower.startsWith('tapa ') || nombreLower.startsWith('tapon ');
+                        const esEditable = esSoplado && !esTapa;
+
                         return (
                           <tr key={desglose.id}>
                             <td>
@@ -486,15 +570,28 @@ const CotizacionForm = ({
                               <span className="badge bg-secondary">{desglose.pesoOriginal || desglose.peso}g</span>
                             </td>
                             <td>
-                              {esSoplado ? (
-                                <input
-                                  type="number"
-                                  className="form-control form-control-sm"
-                                  style={{width: '80px'}}
-                                  value={pesoPersonalizado}
-                                  onChange={(e) => handlePesoChange(desglose.id, e.target.value)}
-                                  min="1"
-                                />
+                              {esEditable ? (
+                                <div className="input-group input-group-sm" style={{width: '150px'}}>
+                                  <input
+                                    type="number"
+                                    className="form-control form-control-sm"
+                                    value={pesoPersonalizado}
+                                    onChange={(e) => handlePesoChange(desglose.id, e.target.value)}
+                                    min="0.01"
+                                    step="0.01"
+                                    placeholder={desglose.peso}
+                                  />
+                                  <select
+                                    className="form-select form-select-sm"
+                                    style={{maxWidth: '60px'}}
+                                    value={unidadesPeso[desglose.id] || 'g'}
+                                    onChange={(e) => handleUnidadPesoChange(desglose.id, e.target.value)}
+                                  >
+                                    <option value="g">g</option>
+                                    <option value="kg">kg</option>
+                                    <option value="lb">lb</option>
+                                  </select>
+                                </div>
                               ) : (
                                 <span className="badge bg-warning">
                                   {pesoPersonalizado}g (Fijo)

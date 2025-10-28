@@ -1,5 +1,11 @@
 // Módulo de productos - 4 INYECTADOS + 4 SOPLADOS de muestra
 
+// Función helper para obtener ruta de imagen de producto
+export const obtenerImagenProducto = (producto) => {
+  // Retorna la ruta por ID de producto
+  return `/images/productos/producto_${producto.idProducto}.jpg`;
+};
+
 export const productosIniciales = [
   // PRODUCTOS (1-20 de 198 totales)
 

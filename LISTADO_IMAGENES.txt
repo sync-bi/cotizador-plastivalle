@@ -1,0 +1,15 @@
+[eval]:1
+const productos = require('./src/data/productos').productosIniciales; const unicos = {}; productos.forEach(p => { if (\!unicos[p.idProducto]) unicos[p.idProducto] = p.producto; }); Object.keys(unicos).sort((a,b) => a-b).forEach(id => console.log('producto_' + id + '.jpg -> ' + unicos[id]));
+                                                                                                                      ^
+
+SyntaxError: Invalid or unexpected token
+    at makeContextifyScript (node:internal/vm:185:14)
+    at compileScript (node:internal/process/execution:386:10)
+    at node:internal/process/execution:450:25
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:447:60)
+    at evalFunction (node:internal/process/execution:87:30)
+    at evalScript (node:internal/process/execution:99:3)
+    at node:internal/main/eval_string:74:3
+
+Node.js v22.17.1
