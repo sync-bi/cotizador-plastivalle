@@ -1,0 +1,102 @@
+/* Colores Plastivalle */
+:root {
+  --plastivalle-orange: #ED5108;
+  --plastivalle-orange-secondary: #C96A3B;
+  --plastivalle-gray-dark: #9C9B9B;
+  --plastivalle-gray-light: #D0CCC9;
+  --plastivalle-white: #FCFCFB;
+}
+
+/* Navbar principal */
+.navbar-plastivalle {
+  background-color: var(--plastivalle-orange) !important;
+}
+
+/* Navegación secundaria */
+.navbar-tabs {
+  background-color: var(--plastivalle-white) !important;
+}
+
+/* Botones primarios */
+.btn-primary {
+  background-color: var(--plastivalle-orange) !important;
+  border-color: var(--plastivalle-orange) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--plastivalle-orange-secondary) !important;
+  border-color: var(--plastivalle-orange-secondary) !important;
+}
+
+/* Botones outline primary */
+.btn-outline-primary {
+  color: var(--plastivalle-orange) !important;
+  border-color: var(--plastivalle-orange) !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--plastivalle-orange) !important;
+  border-color: var(--plastivalle-orange) !important;
+  color: white !important;
+}
+
+/* Nav pills activo */
+.nav-pills .nav-link.active {
+  background-color: var(--plastivalle-orange) !important;
+}
+
+.nav-pills .nav-link {
+  color: var(--plastivalle-gray-dark);
+}
+
+.nav-pills .nav-link:hover {
+  color: var(--plastivalle-orange);
+}
+
+/* Tablas - header oscuro */
+.table-dark {
+  background-color: var(--plastivalle-orange) !important;
+}
+
+.table-dark th {
+  background-color: var(--plastivalle-orange) !important;
+  border-color: var(--plastivalle-orange-secondary) !important;
+}
+
+/* Badges personalizados */
+.badge.bg-primary {
+  background-color: var(--plastivalle-orange) !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--plastivalle-orange-secondary) !important;
+}
+
+/* Cards */
+.card {
+  border-color: var(--plastivalle-gray-light);
+}
+
+/* Links y texto destacado */
+a {
+  color: var(--plastivalle-orange);
+}
+
+a:hover {
+  color: var(--plastivalle-orange-secondary);
+}
+
+/* Fondo de la aplicación */
+body {
+  background-color: var(--plastivalle-white) !important;
+}
+
+/* Hover en filas de tabla */
+.table-hover tbody tr:hover {
+  background-color: rgba(237, 81, 8, 0.05) !important;
+}
+
+/* Border de cards */
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgba(156, 155, 155, 0.075) !important;
+}

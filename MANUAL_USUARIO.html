@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Sistema de Cotizaciones Plastivalle</title>
+    <style>
+        @page {
+            margin: 2.5cm;
+        }
+
+        body {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 21cm;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #ED5108;
+            font-size: 28pt;
+            border-bottom: 3px solid #ED5108;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+
+        h2 {
+            color: #ED5108;
+            font-size: 20pt;
+            margin-top: 25px;
+            border-left: 5px solid #ED5108;
+            padding-left: 15px;
+        }
+
+        h3 {
+            color: #C96A3B;
+            font-size: 16pt;
+            margin-top: 20px;
+        }
+
+        h4 {
+            color: #666;
+            font-size: 14pt;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 11pt;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #ED5108;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 10px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .highlight-admin {
+            background-color: #fff3cd;
+            font-weight: bold;
+        }
+
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 5px 0;
+        }
+
+        .note {
+            background-color: #f0f8ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ff6b35;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .toc {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .toc ul {
+            list-style-type: none;
+        }
+
+        .toc a {
+            color: #ED5108;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .header-image {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+
+        .badge-admin {
+            background-color: #ED5108;
+            color: white;
+        }
+
+        .badge-vendedor {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+
+        @media print {
+            body {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-image">
+        <h1 style="font-size: 36pt; margin-bottom: 10px;">📘 MANUAL DE USUARIO</h1>
+        <h2 style="border: none; color: #666; font-size: 24pt; margin-top: 0;">Sistema de Cotizaciones Plastivalle</h2>
+        <p style="font-size: 14pt; color: #666;">Versión 1.0 - Octubre 2025</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="toc">
+        <h2 style="border: none; margin-top: 0;">📑 Tabla de Contenidos</h2>
+        <ul style="font-size: 12pt; line-height: 2;">
+            <li><a href="#acceso">1. Acceso al Sistema</a></li>
+            <li><a href="#usuarios">2. Usuarios y Contraseñas</a></li>
+            <li><a href="#roles">3. Roles y Permisos</a></li>
+            <li><a href="#funcionalidades">4. Funcionalidades por Rol</a></li>
+            <li><a href="#cotizaciones">5. Gestión de Cotizaciones</a></li>
+            <li><a href="#clientes">6. Gestión de Clientes</a></li>
+            <li><a href="#productos">7. Gestión de Productos</a></li>
+            <li><a href="#pdfs">8. Generar y Enviar PDFs</a></li>
+            <li><a href="#faq">9. Preguntas Frecuentes</a></li>
+            <li><a href="#seguridad">10. Seguridad</a></li>
+            <li><a href="#soporte">11. Soporte Técnico</a></li>
+        </ul>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 id="acceso">🔐 1. Acceso al Sistema</h2>
+
+    <h3>URL de Acceso</h3>
+    <ul>
+        <li><strong>Desarrollo Local:</strong> <code>http://localhost:3000</code></li>
+        <li><strong>Producción:</strong> [URL de tu servidor Vercel]</li>
+    </ul>
+
+    <h3>Pantalla de Login</h3>
+    <p>Al acceder al sistema, verás una pantalla de login con:</p>
+    <ul>
+        <li>Logo de Plastivalle</li>
+        <li>Campo de correo electrónico</li>
+        <li>Campo de contraseña</li>
+        <li>Botón "Iniciar Sesión"</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2 id="usuarios">👥 2. Usuarios y Contraseñas</h2>
+
+    <div class="success">
+        <h3 style="margin-top: 0; color: #28a745;">Contraseña Universal</h3>
+        <p style="font-size: 14pt;"><strong>Todos los usuarios tienen la misma contraseña:</strong> <code style="font-size: 16pt; background-color: #fff;">plastivalle2025</code></p>
+    </div>
+
+    <h3>Lista Completa de Usuarios</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Cargo</th>
+                <th>Teléfono</th>
+                <th>Rol</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="highlight-admin">
+                <td>1</td>
+                <td><strong>Oscar Carrillo</strong></td>
+                <td>administracion@plastivalle.com</td>
+                <td>Administración</td>
+                <td>3143607707</td>
+                <td><span class="badge badge-admin">ADMIN</span></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Clemencia Basto</td>
+                <td>ventas2@plastivalle.com</td>
+                <td>Ventas 2</td>
+                <td>3134612909</td>
+                <td><span class="badge badge-vendedor">Vendedor</span></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Mary Luz Hernandez</td>
+                <td>ventas3@plastivalle.com</td>
+                <td>Ventas 3</td>
+                <td>3104800912</td>
+                <td><span class="badge badge-vendedor">Vendedor</span></td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Angie Ramirez</td>
+                <td>ventas@plastivalle.com</td>
+                <td>Punto de Venta</td>
+                <td>3208425008</td>
+                <td><span class="badge badge-vendedor">Vendedor</span></td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>Juan Guillermo Ossa</td>
+                <td>losenvases@gmail.com</td>
+                <td>Free Lance</td>
+                <td>3102131493</td>
+                <td><span class="badge badge-vendedor">Vendedor</span></td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>Carlos Ossa</td>
+                <td>gerencia@plastivalle.com</td>
+                <td>Ventas Gerenciales</td>
+                <td>3107861932</td>
+                <td><span class="badge badge-vendedor">Vendedor</span></td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>Juan Manuel Cardozo</td>
+                <td>ventas4.plastivalle@gmail.com</td>
+                <td>Ventas 4</td>
+                <td>3126384818</td>
+                <td><span class="badge badge-vendedor">Vendedor</span></td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>Jessica Sanchez</td>
+                <td>tesoreria@plastivalle.com</td>
+                <td>Tesorería</td>
+                <td>3193211387</td>
+                <td><span class="badge badge-vendedor">Vendedor</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <h2 id="roles">🎭 3. Roles y Permisos</h2>
+
+    <h3>👑 ADMINISTRADOR</h3>
+    <p><strong>Usuario:</strong> Oscar Carrillo (administracion@plastivalle.com)</p>
+
+    <h4>Permisos Completos:</h4>
+    <ul>
+        <li>✅ Ver <strong>TODAS</strong> las cotizaciones de todos los vendedores</li>
+        <li>✅ Crear, editar y eliminar cotizaciones</li>
+        <li>✅ Crear, editar y eliminar clientes</li>
+        <li>✅ Crear, editar y eliminar productos</li>
+        <li>✅ Generar PDFs de cualquier cotización</li>
+        <li>✅ Enviar cotizaciones por email</li>
+        <li>✅ Acceso total al sistema</li>
+    </ul>
+
+    <div class="note">
+        <strong>Características Especiales del Administrador:</strong>
+        <ul>
+            <li>Único usuario con acceso a la gestión de clientes y productos</li>
+            <li>Puede ver el trabajo de todos los vendedores</li>
+            <li>Puede modificar o eliminar cualquier cotización</li>
+        </ul>
+    </div>
+
+    <h3>👤 VENDEDOR</h3>
+    <p><strong>Usuarios:</strong> Todos los demás usuarios</p>
+
+    <h4>Permisos Limitados:</h4>
+    <ul>
+        <li>✅ Ver solo <strong>SUS PROPIAS</strong> cotizaciones</li>
+        <li>✅ Crear nuevas cotizaciones</li>
+        <li>✅ Editar y eliminar sus propias cotizaciones</li>
+        <li>✅ Generar PDFs de sus cotizaciones</li>
+        <li>✅ Enviar sus cotizaciones por email</li>
+        <li>✅ Ver listado completo de clientes (solo lectura)</li>
+        <li>✅ Ver listado completo de productos (solo lectura)</li>
+        <li>❌ NO pueden crear, editar o eliminar clientes</li>
+        <li>❌ NO pueden crear, editar o eliminar productos</li>
+        <li>❌ NO pueden ver cotizaciones de otros vendedores</li>
+    </ul>
+
+    <div class="note">
+        <strong>Características Especiales de los Vendedores:</strong>
+        <ul>
+            <li>Cada cotización creada queda registrada con el email del vendedor</li>
+            <li>Los PDFs generados muestran automáticamente el nombre, cargo y teléfono del vendedor</li>
+            <li>Solo pueden gestionar sus propias cotizaciones</li>
+        </ul>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 id="funcionalidades">📊 4. Funcionalidades por Rol</h2>
+
+    <h3>Panel de Navegación</h3>
+    <p>Al iniciar sesión, verás en la parte superior:</p>
+    <ul>
+        <li><strong>Barra naranja:</strong> Logo de Plastivalle + Nombre del sistema</li>
+        <li><strong>Buscador:</strong> Para buscar en cualquier listado</li>
+        <li><strong>Datos del usuario:</strong> Tu nombre y cargo</li>
+        <li><strong>Botón de salida:</strong> Para cerrar sesión</li>
+    </ul>
+
+    <h3>Pestañas Disponibles</h3>
+
+    <h4>Para TODOS los usuarios:</h4>
+    <ol>
+        <li><strong>Cotizaciones:</strong> Gestionar cotizaciones</li>
+        <li><strong>Clientes:</strong> Ver listado de clientes</li>
+        <li><strong>Productos:</strong> Ver listado de productos</li>
+    </ol>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Pestaña</th>
+                <th>Vendedor ve</th>
+                <th>Administrador ve</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Cotizaciones</strong></td>
+                <td>Solo sus propias cotizaciones + botón "Nueva Cotización"</td>
+                <td>TODAS las cotizaciones + botón "Nueva Cotización"</td>
+            </tr>
+            <tr>
+                <td><strong>Clientes</strong></td>
+                <td>Lista completa (sin botones de acción)</td>
+                <td>Lista completa + botón "Nuevo Cliente" + botones editar/eliminar</td>
+            </tr>
+            <tr>
+                <td><strong>Productos</strong></td>
+                <td>Lista completa (sin botones de acción)</td>
+                <td>Lista completa + botón "Nuevo Producto" + botones editar/eliminar</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <h2 id="cotizaciones">📝 5. Gestión de Cotizaciones</h2>
+
+    <h3>Crear una Nueva Cotización</h3>
+
+    <ol>
+        <li><strong>Clic en "Nueva Cotización"</strong> (botón verde con símbolo +)</li>
+        <li><strong>Llenar el formulario:</strong>
+            <ul>
+                <li><strong>Cliente:</strong> Seleccionar de la lista desplegable</li>
+                <li><strong>Fecha:</strong> Se completa automáticamente (puedes cambiarla)</li>
+                <li><strong>Validez:</strong> Días de validez (por defecto 30)</li>
+                <li><strong>Productos:</strong> Agregar productos a la cotización</li>
+            </ul>
+        </li>
+        <li><strong>Agregar Productos:</strong>
+            <ul>
+                <li>Buscar producto por nombre o ID</li>
+                <li>Filtrar por proceso (Inyectado/Soplado)</li>
+                <li>Seleccionar producto</li>
+                <li>Indicar cantidad</li>
+                <li>Agregar descripción personalizada (opcional)</li>
+                <li>Clic en "Agregar"</li>
+            </ul>
+        </li>
+        <li><strong>Configurar Términos Comerciales:</strong>
+            <ul>
+                <li>Forma de pago</li>
+                <li>Tiempo de despacho</li>
+                <li>Transporte</li>
+                <li>Observaciones</li>
+            </ul>
+        </li>
+        <li><strong>Revisar Totales:</strong>
+            <ul>
+                <li>Subtotal</li>
+                <li>IVA (19%)</li>
+                <li>Total</li>
+            </ul>
+        </li>
+        <li><strong>Guardar:</strong> Clic en "Guardar Cotización"</li>
+    </ol>
+
+    <h3>Ver Cotizaciones</h3>
+
+    <h4>Columnas visibles:</h4>
+    <ul>
+        <li>Número de cotización</li>
+        <li>Cliente</li>
+        <li>Fecha</li>
+        <li>Estado (Borrador/Enviada/Aprobada/Rechazada)</li>
+        <li>Total</li>
+        <li>Acciones</li>
+    </ul>
+
+    <div class="note">
+        <strong>Importante:</strong>
+        <ul>
+            <li>Los vendedores solo ven sus propias cotizaciones</li>
+            <li>El admin ve todas las cotizaciones</li>
+            <li>Usa el buscador para filtrar por cualquier campo</li>
+        </ul>
+    </div>
+
+    <h3>Estados de Cotización</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Estado</th>
+                <th>Descripción</th>
+                <th>Color</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Borrador</td>
+                <td>Cotización en proceso</td>
+                <td>Gris</td>
+            </tr>
+            <tr>
+                <td>Enviada</td>
+                <td>Cotización enviada al cliente</td>
+                <td>Azul</td>
+            </tr>
+            <tr>
+                <td>Aprobada</td>
+                <td>Cliente aceptó la cotización</td>
+                <td>Verde</td>
+            </tr>
+            <tr>
+                <td>Rechazada</td>
+                <td>Cliente rechazó la cotización</td>
+                <td>Rojo</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="warning">
+        <strong>⚠️ Advertencia al Eliminar:</strong><br>
+        Cuando eliminas una cotización, esta acción NO se puede deshacer. Asegúrate de que realmente deseas eliminar la cotización antes de confirmar.
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 id="clientes">👥 6. Gestión de Clientes</h2>
+
+    <h3>Ver Clientes (Todos los usuarios)</h3>
+
+    <h4>Información visible:</h4>
+    <ul>
+        <li>Nombre del cliente</li>
+        <li>Email</li>
+        <li>Teléfono</li>
+        <li>Empresa</li>
+    </ul>
+
+    <h4>Funcionalidades:</h4>
+    <ul>
+        <li>Búsqueda por cualquier campo</li>
+        <li>Ordenamiento por columnas</li>
+        <li>Ver todos los clientes registrados</li>
+    </ul>
+
+    <h3>Crear Cliente (Solo ADMIN)</h3>
+
+    <ol>
+        <li>Clic en "Nuevo Cliente"</li>
+        <li>Llenar formulario:
+            <ul>
+                <li>Nombre completo</li>
+                <li>Email</li>
+                <li>Teléfono</li>
+                <li>Empresa</li>
+                <li>Dirección</li>
+                <li>Ciudad</li>
+                <li>NIT</li>
+            </ul>
+        </li>
+        <li>Clic en "Guardar"</li>
+    </ol>
+
+    <div class="note">
+        <strong>Nota para Vendedores:</strong><br>
+        Si necesitas agregar un nuevo cliente, debes solicitar al administrador (Oscar Carrillo) que lo cree en el sistema.
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 id="productos">📦 7. Gestión de Productos</h2>
+
+    <h3>Ver Productos (Todos los usuarios)</h3>
+
+    <h4>Información visible:</h4>
+    <ul>
+        <li>Imagen del producto</li>
+        <li>ID del producto</li>
+        <li>Nombre</li>
+        <li>Categoría (Inyectados/Soplados)</li>
+        <li>Proceso</li>
+        <li>Material</li>
+        <li>Peso (gramos)</li>
+        <li>Precio</li>
+    </ul>
+
+    <h3>Crear Producto (Solo ADMIN)</h3>
+
+    <ol>
+        <li>Clic en "Nuevo Producto"</li>
+        <li>Llenar formulario:
+            <ul>
+                <li>ID del producto</li>
+                <li>Nombre</li>
+                <li>Categoría</li>
+                <li>Proceso</li>
+                <li>Material</li>
+                <li>Peso (gramos)</li>
+                <li>Precio</li>
+                <li>Descripción</li>
+            </ul>
+        </li>
+        <li>Clic en "Guardar"</li>
+    </ol>
+
+    <div class="note">
+        <strong>Nota para Vendedores:</strong><br>
+        Si necesitas agregar un nuevo producto o modificar precios, debes solicitar al administrador (Oscar Carrillo) que lo gestione.
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 id="pdfs">📄 8. Generar y Enviar PDFs</h2>
+
+    <h3>Generar PDF de Cotización</h3>
+
+    <ol>
+        <li>En la lista de cotizaciones, busca la cotización deseada</li>
+        <li>Clic en el botón de <strong>descarga</strong> (⬇️)</li>
+        <li>Se abre una ventana de impresión con el PDF</li>
+        <li>Opciones:
+            <ul>
+                <li>Imprimir directamente</li>
+                <li>Guardar como PDF</li>
+                <li>Cancelar</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h3>Contenido del PDF</h3>
+
+    <p>El PDF incluye automáticamente:</p>
+
+    <ul>
+        <li><strong>Encabezado:</strong> Logo y datos de Plastivalle</li>
+        <li><strong>Información del cliente:</strong>
+            <ul>
+                <li>Nombre</li>
+                <li>Empresa</li>
+                <li>Email</li>
+                <li>Teléfono</li>
+            </ul>
+        </li>
+        <li><strong>Detalles de la cotización:</strong>
+            <ul>
+                <li>Número de cotización</li>
+                <li>Fecha</li>
+                <li>Productos con imágenes y descripciones</li>
+                <li>Cantidades y precios</li>
+                <li>Subtotal, IVA (19%) y Total</li>
+            </ul>
+        </li>
+        <li><strong>Condiciones comerciales:</strong>
+            <ul>
+                <li>Forma de pago</li>
+                <li>Tiempo de despacho</li>
+                <li>Transporte</li>
+                <li>Validez</li>
+                <li>Observaciones</li>
+            </ul>
+        </li>
+        <li><strong>Firma personalizada:</strong>
+            <ul>
+                <li>Nombre del vendedor que creó la cotización</li>
+                <li>Cargo</li>
+                <li>Teléfono</li>
+                <li>Email</li>
+            </ul>
+        </li>
+    </ul>
+
+    <div class="success">
+        <strong>✨ Firma Automática:</strong><br>
+        Cada PDF se genera automáticamente con TUS datos (nombre, cargo, teléfono y email). No necesitas modificar nada, el sistema lo hace por ti.
+    </div>
+
+    <h3>Enviar Cotización por Email</h3>
+
+    <ol>
+        <li>En la lista de cotizaciones, busca la cotización deseada</li>
+        <li>Clic en el botón de <strong>email</strong> (✉️)</li>
+        <li>El sistema automáticamente:
+            <ul>
+                <li>Genera el PDF</li>
+                <li>Descarga el PDF en tu computador</li>
+                <li>Abre Gmail web con un correo preparado</li>
+            </ul>
+        </li>
+        <li>En Gmail:
+            <ul>
+                <li>El destinatario ya está lleno (email del cliente)</li>
+                <li>El asunto está preparado</li>
+                <li>El cuerpo del email está redactado</li>
+            </ul>
+        </li>
+        <li><strong>IMPORTANTE:</strong> Adjunta manualmente el PDF descargado</li>
+        <li>Agrega cualquier comentario adicional si es necesario</li>
+        <li>Clic en "Enviar"</li>
+    </ol>
+
+    <div class="warning">
+        <strong>⚠️ Importante:</strong><br>
+        El sistema NO adjunta automáticamente el PDF. Después de que se abra Gmail, DEBES adjuntar manualmente el PDF que se descargó antes de enviar el correo.
+    </div>
+
+    <div class="note">
+        <strong>Nota:</strong><br>
+        Si el cliente no tiene email registrado, el sistema abre Gmail para que ingreses el destinatario manualmente.
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2 id="faq">❓ 9. Preguntas Frecuentes</h2>
+
+    <h3>¿Cómo recupero mi contraseña?</h3>
+    <p>Contacta al administrador (Oscar Carrillo - administracion@plastivalle.com, Tel: 3143607707) para que restablezca tu contraseña.</p>
+
+    <h3>¿Por qué no veo los botones de editar/eliminar en clientes y productos?</h3>
+    <p>Solo el administrador puede modificar clientes y productos. Los vendedores solo tienen acceso de lectura.</p>
+
+    <h3>¿Por qué no veo las cotizaciones de mis compañeros?</h3>
+    <p>El sistema está diseñado para que cada vendedor solo vea sus propias cotizaciones. Solo el administrador puede ver todas las cotizaciones.</p>
+
+    <h3>¿Puedo cambiar el precio de un producto en una cotización?</h3>
+    <p>Sí, al agregar un producto a una cotización, puedes modificar el precio unitario antes de agregarlo.</p>
+
+    <h3>¿Cómo cambio el estado de una cotización?</h3>
+    <p>El estado se cambia automáticamente a "Enviada" cuando envías la cotización por email. Para cambiar a otros estados (Aprobada/Rechazada), edita la cotización y selecciona el nuevo estado.</p>
+
+    <h3>¿El PDF se envía automáticamente por email?</h3>
+    <p>No. El sistema genera el PDF, lo descarga en tu computador y abre Gmail con el correo preparado, pero DEBES adjuntar manualmente el PDF antes de enviar.</p>
+
+    <h3>¿Puedo agregar varios productos a una cotización?</h3>
+    <p>Sí, puedes agregar todos los productos que necesites. Cada uno se mostrará en el PDF con su imagen y descripción.</p>
+
+    <h3>¿Qué pasa con las cotizaciones antiguas?</h3>
+    <p>Las cotizaciones creadas antes del sistema de usuarios (sin creador asignado) pueden ser editadas por cualquier usuario que las vea. El administrador siempre puede verlas y editarlas.</p>
+
+    <h3>¿Cómo busco una cotización específica?</h3>
+    <p>Usa el buscador en la parte superior derecha. Puedes buscar por número de cotización, nombre del cliente, fecha, etc.</p>
+
+    <div class="page-break"></div>
+
+    <h2 id="seguridad">🔒 10. Seguridad</h2>
+
+    <h3>Cierre de Sesión</h3>
+
+    <div class="warning">
+        <strong>⚠️ IMPORTANTE:</strong><br>
+        Siempre cierra sesión cuando termines de usar el sistema.
+    </div>
+
+    <p><strong>Para cerrar sesión:</strong></p>
+    <ol>
+        <li>Clic en el botón de salida (🚪) en la esquina superior derecha</li>
+        <li>Serás redirigido automáticamente a la pantalla de login</li>
+    </ol>
+
+    <h3>Recomendaciones de Seguridad</h3>
+
+    <ul>
+        <li>✅ No compartas tu contraseña con nadie</li>
+        <li>✅ Cierra sesión si te alejas de tu computador</li>
+        <li>✅ No dejes sesiones abiertas en computadores compartidos</li>
+        <li>✅ Reporta cualquier actividad sospechosa al administrador</li>
+        <li>✅ Usa el sistema solo desde redes seguras</li>
+        <li>✅ No compartas información de clientes fuera del sistema</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2 id="soporte">📞 11. Soporte Técnico</h2>
+
+    <h3>Contacto Administrador del Sistema</h3>
+
+    <table>
+        <tr>
+            <td><strong>Nombre:</strong></td>
+            <td>Oscar Carrillo</td>
+        </tr>
+        <tr>
+            <td><strong>Cargo:</strong></td>
+            <td>Administración</td>
+        </tr>
+        <tr>
+            <td><strong>Email:</strong></td>
+            <td>administracion@plastivalle.com</td>
+        </tr>
+        <tr>
+            <td><strong>Teléfono:</strong></td>
+            <td>3143607707</td>
+        </tr>
+    </table>
+
+    <h3>¿Cuándo contactar al administrador?</h3>
+
+    <ul>
+        <li>Olvidaste tu contraseña</li>
+        <li>Necesitas crear un nuevo cliente</li>
+        <li>Necesitas crear o modificar un producto</li>
+        <li>Necesitas cambiar precios</li>
+        <li>Tienes problemas de acceso al sistema</li>
+        <li>Detectas algún error en el sistema</li>
+        <li>Necesitas eliminar información sensible</li>
+    </ul>
+
+    <h3>Soporte para Desarrollo</h3>
+
+    <p>Para reportar errores técnicos o solicitar nuevas funcionalidades, contacta al equipo de desarrollo.</p>
+
+    <div class="page-break"></div>
+
+    <h2>🎯 Resumen Rápido</h2>
+
+    <h3>Para Vendedores:</h3>
+    <div class="note">
+        <ol>
+            <li>Iniciar sesión con tu email corporativo</li>
+            <li>Contraseña: <code>plastivalle2025</code></li>
+            <li>Crear cotizaciones para tus clientes</li>
+            <li>Generar PDFs con tu firma personalizada</li>
+            <li>Enviar por email a tus clientes</li>
+            <li>Solo verás tus propias cotizaciones</li>
+        </ol>
+    </div>
+
+    <h3>Para Administrador:</h3>
+    <div class="success">
+        <ol>
+            <li>Usuario: <code>administracion@plastivalle.com</code></li>
+            <li>Contraseña: <code>plastivalle2025</code></li>
+            <li>Acceso completo al sistema</li>
+            <li>Gestionar todos los recursos (clientes, productos, cotizaciones)</li>
+            <li>Ver el trabajo de todos los vendedores</li>
+            <li>Modificar cualquier dato del sistema</li>
+        </ol>
+    </div>
+
+    <div style="margin-top: 50px; padding: 20px; background-color: #f8f9fa; border-top: 3px solid #ED5108; text-align: center;">
+        <p style="font-size: 12pt; color: #666; margin: 0;">
+            <strong>Sistema de Cotizaciones Plastivalle</strong><br>
+            Versión 1.0 - Octubre 2025<br>
+            Todos los derechos reservados
+        </p>
+    </div>
+
+</body>
+</html>

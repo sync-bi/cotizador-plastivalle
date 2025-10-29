@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { recalcularDesglosesConPesos } from '../utils/calculosProductos';
+import { obtenerImagenProducto } from '../data/productos';
 
 const CotizacionForm = ({ 
   editingItem, 
@@ -30,9 +31,12 @@ const CotizacionForm = ({
   const [selectedDesgloses, setSelectedDesgloses] = useState([]);
   const [cantidad, setCantidad] = useState(1);
   const [procesoFiltro, setProcesoFiltro] = useState('');
-  
+
   // Busqueda de clientes
   const [busquedaCliente, setBusquedaCliente] = useState('');
+
+  // Busqueda de productos
+  const [busquedaProducto, setBusquedaProducto] = useState('');
   
   // Estados para opciones personalizables
   const [opcionesSoplado, setOpcionesSoplado] = useState({
@@ -52,10 +56,15 @@ const CotizacionForm = ({
   // Obtener productos únicos filtrados por proceso
   const getProductosUnicos = () => {
     if (!window.productosAgrupados) return [];
-    
-    return window.productosAgrupados.filter(producto => 
-      !procesoFiltro || producto.proceso === procesoFiltro
-    );
+
+    return window.productosAgrupados.filter(producto => {
+      const cumpleProceso = !procesoFiltro || producto.proceso === procesoFiltro;
+      const cumpleBusqueda = !busquedaProducto ||
+        producto.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
+        producto.id.toString().includes(busquedaProducto);
+
+      return cumpleProceso && cumpleBusqueda;
+    });
   };
 
   // Obtener desgloses del producto seleccionado con cálculos dinámicos
@@ -201,6 +210,7 @@ const CotizacionForm = ({
     const nuevoItem = {
       id: Date.now(),
       productoId: producto.id,
+      idProducto: producto.idProducto,
       nombre: `${producto.nombre} (${desglosesSeleccionados.length} componentes)`,
       precio: precioTotal,
       cantidad: cantidad,
@@ -247,7 +257,29 @@ const CotizacionForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Limpiar valores undefined antes de enviar a Firebase
     const cotizacionData = { ...formData, ...totales };
+
+    // Limpiar items para asegurar que no tengan undefined
+    cotizacionData.items = cotizacionData.items.map(item => {
+      const cleanItem = { ...item };
+      // Convertir undefined a null o eliminar el campo
+      Object.keys(cleanItem).forEach(key => {
+        if (cleanItem[key] === undefined) {
+          cleanItem[key] = null;
+        }
+      });
+      return cleanItem;
+    });
+
+    // Limpiar campos principales
+    Object.keys(cotizacionData).forEach(key => {
+      if (cotizacionData[key] === undefined) {
+        cotizacionData[key] = null;
+      }
+    });
+
     onSubmit(cotizacionData);
   };
 
@@ -436,6 +468,25 @@ const CotizacionForm = ({
 
           {/* Opciones personalizables para INYECCIÓN - ELIMINADO */}
           {/* Las opciones ahora están dentro de la tabla de desgloses */}
+
+          {/* Búsqueda de producto */}
+          <div className="row g-2 mb-2">
+            <div className="col-md-12">
+              <label className="form-label">🔍 Buscar Producto</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Buscar por nombre o ID..."
+                value={busquedaProducto}
+                onChange={(e) => setBusquedaProducto(e.target.value)}
+              />
+              {busquedaProducto && (
+                <small className="text-muted">
+                  {getProductosUnicos().length} producto(s) encontrado(s)
+                </small>
+              )}
+            </div>
+          </div>
 
           {/* Selección de producto */}
           <div className="row g-2 mb-3">
@@ -655,6 +706,7 @@ const CotizacionForm = ({
               <table className="table table-sm mb-0">
                 <thead className="table-light">
                   <tr>
+                    <th style={{width: '60px'}}>Imagen</th>
                     <th>Producto</th>
                     <th>Cantidad</th>
                     <th className="text-end">Precio Unit.</th>
@@ -665,6 +717,19 @@ const CotizacionForm = ({
                 <tbody>
                   {formData.items.map(item => (
                     <tr key={item.id}>
+                      <td>
+                        {item.idProducto && (
+                          <img
+                            src={obtenerImagenProducto({ idProducto: item.idProducto })}
+                            alt={item.nombre}
+                            style={{width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px'}}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/images/productos/placeholder.svg';
+                            }}
+                          />
+                        )}
+                      </td>
                       <td>
                         <strong>{item.nombre}</strong>
                         <br />

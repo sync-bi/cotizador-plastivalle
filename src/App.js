@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, FileText, Users, Package, Calculator, Search, Download } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Users, Package, Calculator, Search, Download, LogOut } from 'lucide-react';
 import CotizacionForm from './components/CotizacionForm';
 import { obtenerProductosUnicos, obtenerImagenProducto } from './data/productos';
 import { Mail } from 'lucide-react';
 import { useEmailCotizacion } from './hooks/useEmailCotizacion';
 import { clientesAPI, productosAPI, cotizacionesAPI } from './services/firebase';
+import { useAuth } from './hooks/useAuth';
+import { Login } from './components/Login';
+import './plastivalle-theme.css';
 
 const CotizadorApp = () => {
+  // TODOS LOS HOOKS DEBEN IR PRIMERO, ANTES DE CUALQUIER RETURN
+  // Hook de autenticación
+  const { user, userData, loading: authLoading, logout, isAdmin } = useAuth();
+
   const [activeTab, setActiveTab] = useState('cotizaciones');
   const [clientes, setClientes] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -17,7 +24,7 @@ const CotizadorApp = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   // Configuración de la empresa
   const empresaConfig = {
@@ -30,33 +37,9 @@ const CotizadorApp = () => {
     emailEnvio: 'ventas2@plastivalle.com' // Correo desde el cual enviar
   };
 
-  const { enviarCotizacion, isLoading } = useEmailCotizacion(empresaConfig);
+  const { enviarCotizacion, isLoading } = useEmailCotizacion(empresaConfig, userData);
 
-  // Función para cambiar estado de cotización
-const cambiarEstadoCotizacion = async (cotizacionId, nuevoEstado) => {
-  try {
-    const cotizacion = cotizaciones.find(c => c.id === cotizacionId);
-    if (cotizacion) {
-      await cotizacionesAPI.update(cotizacionId, { ...cotizacion, estado: nuevoEstado });
-      setCotizaciones(cotizaciones.map(c =>
-        c.id === cotizacionId
-          ? { ...c, estado: nuevoEstado }
-          : c
-      ));
-    }
-  } catch (error) {
-    console.error('Error al cambiar estado:', error);
-    alert('Error al cambiar estado de cotización: ' + error.message);
-  }
-};
-
-// Función para enviar por correo
-const handleEnviarCorreo = async (cotizacion) => {
-  const cliente = clientes.find(c => c.id === parseInt(cotizacion.clienteId));
-  await enviarCotizacion(cotizacion, cliente, cambiarEstadoCotizacion);
-};
-
-  // Cargar datos desde la API
+  // Cargar datos desde la API - ESTE useEffect DEBE ESTAR ANTES DE LOS RETURNS
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -88,9 +71,59 @@ const handleEnviarCorreo = async (cotizacion) => {
     fetchData();
   }, []);
 
+  // AHORA SÍ PODEMOS USAR RETURNS CONDICIONALES (después de todos los hooks)
+  // Si está cargando la autenticación, mostrar loading
+  if (authLoading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no hay usuario autenticado, mostrar login
+  if (!user) {
+    return <Login />;
+  }
+
+  // Función para cambiar estado de cotización
+  const cambiarEstadoCotizacion = async (cotizacionId, nuevoEstado) => {
+    try {
+      const cotizacion = cotizaciones.find(c => c.id === cotizacionId);
+      if (cotizacion) {
+        await cotizacionesAPI.update(cotizacionId, { ...cotizacion, estado: nuevoEstado });
+        setCotizaciones(cotizaciones.map(c =>
+          c.id === cotizacionId
+            ? { ...c, estado: nuevoEstado }
+            : c
+        ));
+      }
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+      alert('Error al cambiar estado de cotización: ' + error.message);
+    }
+  };
+
+  // Función para enviar por correo
+  const handleEnviarCorreo = async (cotizacion) => {
+    const cliente = clientes.find(c =>
+      c.id === cotizacion.clienteId ||
+      c.id === parseInt(cotizacion.clienteId) ||
+      c.id === String(cotizacion.clienteId)
+    );
+    await enviarCotizacion(cotizacion, cliente, cambiarEstadoCotizacion);
+  };
+
   // Función para generar PDF
   const generarPDF = async (cotizacion) => {
-    const cliente = clientes.find(c => c.id === parseInt(cotizacion.clienteId));
+    // Buscar cliente por ID (probando tanto string como number)
+    const cliente = clientes.find(c =>
+      c.id === cotizacion.clienteId ||
+      c.id === parseInt(cotizacion.clienteId) ||
+      c.id === String(cotizacion.clienteId)
+    );
     
     const htmlContent = `
       <!DOCTYPE html>
@@ -161,9 +194,8 @@ const handleEnviarCorreo = async (cotizacion) => {
       <body>
         <div class="header">
           <div style="display: flex; align-items: center; gap: 20px;">
-            <img src="/images/logo-plastivalle.jpg" alt="Logo Plastivalle" style="height: 60px; border-radius: 4px;" onerror="this.style.display='none'">
+            <img src="/images/logo-plastivalle.jpg" alt="" style="height: 60px; border-radius: 4px; display: block;" onerror="this.style.display='none'">
             <div>
-              <h1 class="company-name">${empresaConfig.nombre}</h1>
               <div class="company-info">${empresaConfig.telefono}</div>
               <div class="company-info">${empresaConfig.direccion}</div>
               <div class="company-info">e-mail: ${empresaConfig.email} ${empresaConfig.web}</div>
@@ -285,9 +317,10 @@ const handleEnviarCorreo = async (cotizacion) => {
 
         <div style="margin-top: 40px;">
           <p><strong>Cordial saludo,</strong></p>
-          <p><strong>Carlos Montero</strong><br>
-          Teléfono: 3208425008<br>
-          E-mail: ventas@plastivalle.com</p>
+          <p><strong>${userData?.nombre || 'Plastivalle'}</strong><br>
+          ${userData?.cargo ? `${userData.cargo}<br>` : ''}
+          Teléfono: ${userData?.telefono || 'PBX: (0571) 745-05-45'}<br>
+          E-mail: ${userData?.email || empresaConfig.email}</p>
         </div>
       </body>
       </html>
@@ -581,6 +614,82 @@ const handleEnviarCorreo = async (cotizacion) => {
     );
   };
 
+  // Función para filtrar cotizaciones por usuario
+  const filtrarCotizacionesPorUsuario = (cotizacionesList) => {
+    // Si userData aún no se ha cargado, mostrar todas temporalmente
+    if (!userData && !user) {
+      return cotizacionesList;
+    }
+
+    const emailUsuario = userData?.email || user?.email;
+
+    // Si es admin, mostrar todas las cotizaciones
+    if (isAdmin() || emailUsuario === 'administracion@plastivalle.com') {
+      console.log('👑 Admin viendo todas las cotizaciones:', cotizacionesList.length);
+      return cotizacionesList;
+    }
+
+    // Si es vendedor, solo mostrar sus propias cotizaciones (o cotizaciones sin creador - legacy)
+    const filtradas = cotizacionesList.filter(cotizacion =>
+      cotizacion.creadoPor === emailUsuario || !cotizacion.creadoPor
+    );
+    console.log('👤 Vendedor viendo sus cotizaciones:', filtradas.length, 'de', cotizacionesList.length);
+    return filtradas;
+  };
+
+  // Función para ordenar productos
+  const ordenarProductos = (productos) => {
+    if (!sortConfig.key) return productos;
+
+    const sorted = [...productos].sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+
+      // Si es idProducto, ordenar numéricamente
+      if (sortConfig.key === 'idProducto') {
+        aValue = parseInt(aValue) || 0;
+        bValue = parseInt(bValue) || 0;
+      }
+
+      // Si es precio o peso, ordenar numéricamente
+      if (sortConfig.key === 'precio' || sortConfig.key === 'peso') {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      }
+
+      // Si es string, ordenar alfabéticamente
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+
+    return sorted;
+  };
+
+  // Función para manejar el click en el header
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Obtener indicador de orden
+  const getSortIndicator = (key) => {
+    if (sortConfig.key !== key) return ' ↕';
+    return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+  };
+
   const getEstadoBadge = (estado) => {
     const badges = {
       'aprobada': 'bg-success',
@@ -594,7 +703,7 @@ const handleEnviarCorreo = async (cotizacion) => {
   return (
     <div className="min-vh-100" style={{backgroundColor: '#f8f9fa'}}>
       {/* Header */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+      <nav className="navbar navbar-expand-lg navbar-dark navbar-plastivalle shadow-sm">
         <div className="container-fluid">
           <div className="d-flex align-items-center">
             <img
@@ -609,7 +718,7 @@ const handleEnviarCorreo = async (cotizacion) => {
             <Calculator className="me-2" size={32} style={{display: 'none'}} />
             <span className="navbar-brand mb-0 h1">PLASTIVALLE - Sistema de Cotizaciones</span>
           </div>
-          <div className="d-flex align-items-center">
+          <div className="d-flex align-items-center gap-3">
             <div className="position-relative">
               <Search className="position-absolute top-50 start-0 translate-middle-y ms-2 text-muted" size={20} />
               <input
@@ -621,12 +730,23 @@ const handleEnviarCorreo = async (cotizacion) => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <div className="text-white d-flex align-items-center gap-2">
+              <span className="fw-bold">{userData?.nombre || user?.email}</span>
+              <span className="badge bg-light text-dark">{userData?.cargo || 'Usuario'}</span>
+            </div>
+            <button
+              className="btn btn-outline-light btn-sm"
+              onClick={logout}
+              title="Cerrar sesión"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </nav>
 
       {/* Navigation Tabs */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+      <nav className="navbar navbar-expand-lg navbar-light navbar-tabs shadow-sm">
         <div className="container-fluid">
           <ul className="nav nav-pills">
             {[
@@ -687,8 +807,12 @@ const handleEnviarCorreo = async (cotizacion) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filtrarElementos(cotizaciones, searchTerm).map(cotizacion => {
-                        const cliente = clientes.find(c => c.id === parseInt(cotizacion.clienteId));
+                      {filtrarElementos(filtrarCotizacionesPorUsuario(cotizaciones), searchTerm).map(cotizacion => {
+                        const cliente = clientes.find(c =>
+                          c.id === cotizacion.clienteId ||
+                          c.id === parseInt(cotizacion.clienteId) ||
+                          c.id === String(cotizacion.clienteId)
+                        );
                         return (
                           <tr key={cotizacion.id}>
                             <td className="fw-bold">{cotizacion.numero}</td>
@@ -723,18 +847,26 @@ const handleEnviarCorreo = async (cotizacion) => {
                                 </button>
                                 
   
-                                <button
-                                  className="btn btn-sm btn-outline-primary"
-                                  onClick={() => editarElemento('cotizacion', cotizacion)}
-                                >
-                                  <Edit size={16} />
-                                </button>
-                                <button
-                                  className="btn btn-sm btn-outline-danger"
-                                  onClick={() => eliminarElemento('cotizacion', cotizacion.id)}
-                                >
-                                  <Trash2 size={16} />
-                                </button>
+                                {(isAdmin() ||
+                                  userData?.email === 'administracion@plastivalle.com' ||
+                                  user?.email === 'administracion@plastivalle.com' ||
+                                  cotizacion.creadoPor === (userData?.email || user?.email) ||
+                                  !cotizacion.creadoPor) && (
+                                  <>
+                                    <button
+                                      className="btn btn-sm btn-outline-primary"
+                                      onClick={() => editarElemento('cotizacion', cotizacion)}
+                                    >
+                                      <Edit size={16} />
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger"
+                                      onClick={() => eliminarElemento('cotizacion', cotizacion.id)}
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -743,7 +875,7 @@ const handleEnviarCorreo = async (cotizacion) => {
                     </tbody>
                   </table>
                 </div>
-                {filtrarElementos(cotizaciones, searchTerm).length === 0 && (
+                {filtrarElementos(filtrarCotizacionesPorUsuario(cotizaciones), searchTerm).length === 0 && (
                   <div className="text-center py-5">
                     <FileText className="mb-3 text-muted" size={48} />
                     <h5 className="text-muted">Sin cotizaciones</h5>
@@ -760,17 +892,19 @@ const handleEnviarCorreo = async (cotizacion) => {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h2 className="mb-0">Clientes</h2>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setModalType('cliente');
-                  setEditingItem(null);
-                  setShowModal(true);
-                }}
-              >
-                <Plus className="me-2" size={20} />
-                Nuevo Cliente
-              </button>
+              {(isAdmin() || userData?.email === 'administracion@plastivalle.com' || user?.email === 'administracion@plastivalle.com') && (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setModalType('cliente');
+                    setEditingItem(null);
+                    setShowModal(true);
+                  }}
+                >
+                  <Plus className="me-2" size={20} />
+                  Nuevo Cliente
+                </button>
+              )}
             </div>
 
             <div className="card shadow-sm">
@@ -794,20 +928,22 @@ const handleEnviarCorreo = async (cotizacion) => {
                           <td>{cliente.telefono}</td>
                           <td>{cliente.empresa}</td>
                           <td className="text-center">
-                            <div className="btn-group">
-                              <button
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() => editarElemento('cliente', cliente)}
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => eliminarElemento('cliente', cliente.id)}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                            {(isAdmin() || userData?.email === 'administracion@plastivalle.com' || user?.email === 'administracion@plastivalle.com') && (
+                              <div className="btn-group">
+                                <button
+                                  className="btn btn-sm btn-outline-primary"
+                                  onClick={() => editarElemento('cliente', cliente)}
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={() => eliminarElemento('cliente', cliente.id)}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -831,17 +967,19 @@ const handleEnviarCorreo = async (cotizacion) => {
           <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
               <h2 className="mb-0">Productos</h2>
-              <button
-                className="btn btn-success"
-                onClick={() => {
-                  setModalType('producto');
-                  setEditingItem(null);
-                  setShowModal(true);
-                }}
-              >
-                <Plus className="me-2" size={20} />
-                Nuevo Producto
-              </button>
+              {(isAdmin() || userData?.email === 'administracion@plastivalle.com' || user?.email === 'administracion@plastivalle.com') && (
+                <button
+                  className="btn btn-success"
+                  onClick={() => {
+                    setModalType('producto');
+                    setEditingItem(null);
+                    setShowModal(true);
+                  }}
+                >
+                  <Plus className="me-2" size={20} />
+                  Nuevo Producto
+                </button>
+              )}
             </div>
 
             <div className="card shadow-sm">
@@ -851,17 +989,61 @@ const handleEnviarCorreo = async (cotizacion) => {
                     <thead className="table-dark">
                       <tr>
                         <th style={{width: '60px'}}>Imagen</th>
-                        <th>Nombre</th>
-                        <th>Categoría</th>
-                        <th>Proceso</th>
-                        <th>Material</th>
-                        <th>Peso</th>
-                        <th className="text-end">Precio</th>
+                        <th
+                          style={{cursor: 'pointer'}}
+                          onClick={() => handleSort('idProducto')}
+                          title="Click para ordenar"
+                        >
+                          ID{getSortIndicator('idProducto')}
+                        </th>
+                        <th
+                          style={{cursor: 'pointer'}}
+                          onClick={() => handleSort('nombre')}
+                          title="Click para ordenar"
+                        >
+                          Nombre{getSortIndicator('nombre')}
+                        </th>
+                        <th
+                          style={{cursor: 'pointer'}}
+                          onClick={() => handleSort('categoria')}
+                          title="Click para ordenar"
+                        >
+                          Categoría{getSortIndicator('categoria')}
+                        </th>
+                        <th
+                          style={{cursor: 'pointer'}}
+                          onClick={() => handleSort('proceso')}
+                          title="Click para ordenar"
+                        >
+                          Proceso{getSortIndicator('proceso')}
+                        </th>
+                        <th
+                          style={{cursor: 'pointer'}}
+                          onClick={() => handleSort('material')}
+                          title="Click para ordenar"
+                        >
+                          Material{getSortIndicator('material')}
+                        </th>
+                        <th
+                          style={{cursor: 'pointer'}}
+                          onClick={() => handleSort('peso')}
+                          title="Click para ordenar"
+                        >
+                          Peso{getSortIndicator('peso')}
+                        </th>
+                        <th
+                          className="text-end"
+                          style={{cursor: 'pointer'}}
+                          onClick={() => handleSort('precio')}
+                          title="Click para ordenar"
+                        >
+                          Precio{getSortIndicator('precio')}
+                        </th>
                         <th className="text-center">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filtrarElementos(productos, searchTerm).map(producto => (
+                      {ordenarProductos(filtrarElementos(productos, searchTerm)).map(producto => (
                         <tr key={producto.id}>
                           <td>
                             <img
@@ -873,6 +1055,9 @@ const handleEnviarCorreo = async (cotizacion) => {
                                 e.target.src = '/images/productos/placeholder.svg';
                               }}
                             />
+                          </td>
+                          <td>
+                            <span className="badge bg-secondary">{producto.idProducto || 'N/A'}</span>
                           </td>
                           <td className="fw-bold">{producto.nombre}</td>
                           <td>
@@ -889,20 +1074,22 @@ const handleEnviarCorreo = async (cotizacion) => {
                           <td>{producto.peso}g</td>
                           <td className="text-end fw-bold">${producto.precio.toLocaleString('es-CO')}</td>
                           <td className="text-center">
-                            <div className="btn-group">
-                              <button
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() => editarElemento('producto', producto)}
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => eliminarElemento('producto', producto.id)}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                            {(isAdmin() || userData?.email === 'administracion@plastivalle.com' || user?.email === 'administracion@plastivalle.com') && (
+                              <div className="btn-group">
+                                <button
+                                  className="btn btn-sm btn-outline-primary"
+                                  onClick={() => editarElemento('producto', producto)}
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={() => eliminarElemento('producto', producto.id)}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -941,17 +1128,25 @@ const handleEnviarCorreo = async (cotizacion) => {
               onSubmit={async (cotizacionData) => {
                 try {
                   if (editingItem) {
+                    // Al editar, mantener el creador original
                     await cotizacionesAPI.update(editingItem.id, { ...cotizacionData, id: editingItem.id });
                     setCotizaciones(cotizaciones.map(c => c.id === editingItem.id ? { ...cotizacionData, id: editingItem.id } : c));
                   } else {
-                    const nuevaCotizacion = await cotizacionesAPI.create(cotizacionData);
+                    // Al crear, agregar el email del usuario actual
+                    const cotizacionConUsuario = {
+                      ...cotizacionData,
+                      creadoPor: userData?.email || user?.email
+                    };
+                    console.log('📝 Creando cotización:', cotizacionConUsuario);
+                    const nuevaCotizacion = await cotizacionesAPI.create(cotizacionConUsuario);
+                    console.log('✅ Cotización creada:', nuevaCotizacion);
                     setCotizaciones([...cotizaciones, nuevaCotizacion]);
                   }
                   setShowModal(false);
                   setEditingItem(null);
                 } catch (error) {
+                  console.error('❌ Error completo:', error);
                   alert('Error al guardar cotización: ' + error.message);
-                  console.error('Error:', error);
                 }
               }}
               onCancel={() => setShowModal(false)}

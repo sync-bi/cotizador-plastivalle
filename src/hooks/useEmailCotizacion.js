@@ -3,7 +3,7 @@ import { useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-export const useEmailCotizacion = (empresaConfig) => {
+export const useEmailCotizacion = (empresaConfig, userData) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Función para generar PDF de la cotización
@@ -77,9 +77,8 @@ export const useEmailCotizacion = (empresaConfig) => {
       <body>
         <div class="header">
           <div style="display: flex; align-items: center; gap: 20px;">
-            <img src="/images/logo-plastivalle.jpg" alt="Logo Plastivalle" style="height: 60px; border-radius: 4px;" onerror="this.style.display='none'">
+            <img src="/images/logo-plastivalle.jpg" alt="" style="height: 60px; border-radius: 4px; display: block;" onerror="this.style.display='none'">
             <div>
-              <h1 class="company-name">${empresaConfig.nombre}</h1>
               <div class="company-info">${empresaConfig.telefono}</div>
               <div class="company-info">${empresaConfig.direccion}</div>
               <div class="company-info">e-mail: ${empresaConfig.email} ${empresaConfig.web}</div>
@@ -110,6 +109,7 @@ export const useEmailCotizacion = (empresaConfig) => {
         <table class="products-table">
           <thead>
             <tr>
+              <th style="width: 60px;">Imagen</th>
               <th>Descripción</th>
               <th style="width: 80px;">Cantidad</th>
               <th style="width: 120px;">Precio Unidad</th>
@@ -119,10 +119,17 @@ export const useEmailCotizacion = (empresaConfig) => {
           <tbody>
             ${cotizacion.items.map((item, index) => {
               let filas = '';
-              
-              // Encabezado del producto
+
+              // Imagen del producto
+              const imagenProducto = item.idProducto ? `/images/productos/producto_${item.idProducto}.jpg` : '/images/productos/placeholder.svg';
+              const numFilas = (item.desglosesSeleccionados?.length || 0) + 1;
+
+              // Encabezado del producto con imagen
               filas += `
                 <tr style="background-color: #f8f9fa;">
+                  <td rowspan="${numFilas}" style="text-align: center; vertical-align: middle; padding: 5px;">
+                    <img src="${imagenProducto}" alt="${item.nombre}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.src='/images/productos/placeholder.svg'">
+                  </td>
                   <td colspan="4" style="font-weight: bold; padding: 10px; border: 2px solid #dee2e6;">
                     PRODUCTO ${index + 1}: ${item.nombre.replace(/ \\(\\d+ componentes\\)/, '')}
                     ${item.descripcionPersonalizada ? `<br><em style="font-size: 11px;">${item.descripcionPersonalizada}</em>` : ''}
@@ -201,9 +208,10 @@ export const useEmailCotizacion = (empresaConfig) => {
 
         <div style="margin-top: 40px;">
           <p><strong>Cordial saludo,</strong></p>
-          <p><strong>Carlos Montero</strong><br>
-          Teléfono: 3208425008<br>
-          E-mail: ventas@plastivalle.com</p>
+          <p><strong>${userData?.nombre || 'Plastivalle'}</strong><br>
+          ${userData?.cargo ? `${userData.cargo}<br>` : ''}
+          Teléfono: ${userData?.telefono || 'PBX: (0571) 745-05-45'}<br>
+          E-mail: ${userData?.email || empresaConfig.email}</p>
         </div>
       </body>
       </html>
@@ -302,10 +310,10 @@ Detalles de la cotización:
 Para cualquier consulta, no dude en contactarnos.
 
 Atentamente,
-Carlos Montero
-${empresaConfig.nombre}
-Teléfono: 3208425008
-Email: ventas@plastivalle.com`;
+${userData?.nombre || 'Plastivalle'}
+${userData?.cargo ? `${userData.cargo}\n` : ''}${empresaConfig.nombre}
+Teléfono: ${userData?.telefono || 'PBX: (0571) 745-05-45'}
+Email: ${userData?.email || empresaConfig.email}`;
 
       // Abrir Gmail Web directamente
       const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailDestino)}&su=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
